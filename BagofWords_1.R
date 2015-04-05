@@ -3,7 +3,7 @@
 # author: khmelkoff
 ###############################################################################
 
-# Загружаем библиотеки, готовим обучающую выборку #############################
+# Р—Р°РіСЂСѓР¶Р°РµРј Р±РёР±Р»РёРѕС‚РµРєРё, РіРѕС‚РѕРІРёРј РѕР±СѓС‡Р°СЋС‰СѓСЋ РІС‹Р±РѕСЂРєСѓ #############################
 
 library(tm)
 library(SnowballC)
@@ -19,27 +19,27 @@ training <- read.delim(unz("labeledTrainData.tsv.zip",
                                quote = "",
                                as.is=TRUE)
 
-# Смотрим на данные ###########################################################
-# Проверяем размерность, инспектируем первое ревю
+# РЎРјРѕС‚СЂРёРј РЅР° РґР°РЅРЅС‹Рµ ###########################################################
+# РџСЂРѕРІРµСЂСЏРµРј СЂР°Р·РјРµСЂРЅРѕСЃС‚СЊ, РёРЅСЃРїРµРєС‚РёСЂСѓРµРј РїРµСЂРІРѕРµ СЂРµРІСЋ
 dim(training)
 r1_length <- nchar(as.character(training[1,3]))
 r1 <- training[1,3] 
 paste(substr(r1,1,700),"...")
 
-# Избавляемся от HTML тегов
+# РР·Р±Р°РІР»СЏРµРјСЃСЏ РѕС‚ HTML С‚РµРіРѕРІ
 cleanHTML <- function(x) {
     return(gsub("<.*?>", "", x))
 }
 r1 <- cleanHTML(r1)
 
-# Оставляем только текст, убираем однобуквенные слова и слова нулевой длины
+# РћСЃС‚Р°РІР»СЏРµРј С‚РѕР»СЊРєРѕ С‚РµРєСЃС‚, СѓР±РёСЂР°РµРј РѕРґРЅРѕР±СѓРєРІРµРЅРЅС‹Рµ СЃР»РѕРІР° Рё СЃР»РѕРІР° РЅСѓР»РµРІРѕР№ РґР»РёРЅС‹
 onlyText <- function(x) {
     x <- gsub("'s", "", x) 
     return(gsub("[^a-zA-Z]", " ", x)) 
 }
 r1 <- onlyText(r1)
 
-# Токенизируем
+# РўРѕРєРµРЅРёР·РёСЂСѓРµРј
 tokenize <- function(x) {
     x <- tolower(x)
     x <- unlist(strsplit(x, split=" "))
@@ -48,14 +48,14 @@ tokenize <- function(x) {
 r1 <- tokenize(r1)
 r1 <- r1[nchar(r1)>1]   
 
-# Создаем список стоп-слов
+# РЎРѕР·РґР°РµРј СЃРїРёСЃРѕРє СЃС‚РѕРї-СЃР»РѕРІ
 stopWords <- stopwords("en")
 r1 <- r1[!r1 %in% stopWords]
 r1[1:20]
 
-# Обрабатываем все 25000 записей
+# РћР±СЂР°Р±Р°С‚С‹РІР°РµРј РІСЃРµ 25000 Р·Р°РїРёСЃРµР№
 rws <- sapply(1:nrow(training), function(x){
-    # Прогресс-индикатор
+    # РџСЂРѕРіСЂРµСЃСЃ-РёРЅРґРёРєР°С‚РѕСЂ
     if(x %% 1000 == 0) print(paste(x, "reviews processed")) 
     
     rw <- training[x,3]
@@ -65,44 +65,44 @@ rws <- sapply(1:nrow(training), function(x){
     rw <- rw[nchar(rw)>1]
     rw <- rw[!rw %in% stopWords]
     
-    paste(rw, collapse=" ") # Снова склеиваем в текст
+    paste(rw, collapse=" ") # РЎРЅРѕРІР° СЃРєР»РµРёРІР°РµРј РІ С‚РµРєСЃС‚
 })
 
 
-# Строим "Мешок слов" #########################################################
-train_vector <- VectorSource(rws) # Вектор
-train_corpus <- Corpus(train_vector, # ?Корпус
+# РЎС‚СЂРѕРёРј "РњРµС€РѕРє СЃР»РѕРІ" #########################################################
+train_vector <- VectorSource(rws) # Р’РµРєС‚РѕСЂ
+train_corpus <- Corpus(train_vector, # ?РљРѕСЂРїСѓСЃ
                        readerControl = list(language = "en"))
-train_bag <- DocumentTermMatrix(train_corpus, # Спец. матрица документы/термины
+train_bag <- DocumentTermMatrix(train_corpus, # РЎРїРµС†. РјР°С‚СЂРёС†Р° РґРѕРєСѓРјРµРЅС‚С‹/С‚РµСЂРјРёРЅС‹
                                 control=list(stemming=TRUE))
 
-train_bag <- removeSparseTerms(train_bag, 0.9982) # Убираем слишком редкие термины
+train_bag <- removeSparseTerms(train_bag, 0.9982) # РЈР±РёСЂР°РµРј СЃР»РёС€РєРѕРј СЂРµРґРєРёРµ С‚РµСЂРјРёРЅС‹
 dim(train_bag)
 
-# Смотрим на перечень наиболее распространенных терминов
+# РЎРјРѕС‚СЂРёРј РЅР° РїРµСЂРµС‡РµРЅСЊ РЅР°РёР±РѕР»РµРµ СЂР°СЃРїСЂРѕСЃС‚СЂР°РЅРµРЅРЅС‹С… С‚РµСЂРјРёРЅРѕРІ
 hight_freq <- findFreqTerms(train_bag, 5000, Inf)
 inspect(train_bag[1:4, hight_freq[1:10]])
 
-# Из специальной матрицы формируем обучающий датафрейм
+# РР· СЃРїРµС†РёР°Р»СЊРЅРѕР№ РјР°С‚СЂРёС†С‹ С„РѕСЂРјРёСЂСѓРµРј РѕР±СѓС‡Р°СЋС‰РёР№ РґР°С‚Р°С„СЂРµР№Рј
 
 train_df <- data.frame(inspect(train_bag[1:25000,]))
 train_df <- cbind(training$sentiment, train_df)
 
-# Сокращенный датафрейм для статьи
+# РЎРѕРєСЂР°С‰РµРЅРЅС‹Р№ РґР°С‚Р°С„СЂРµР№Рј РґР»СЏ СЃС‚Р°С‚СЊРё
 # train_df <- data.frame(inspect(train_bag[1:1000,hight_freq]))
 # train_df <- cbind(training$sentiment[1:1000], train_df)
 
 names(train_df)[1] <- "sentiment"
-vocab <- names(train_df)[-1] # Формируем словарь (для тестовой выборки)
+vocab <- names(train_df)[-1] # Р¤РѕСЂРјРёСЂСѓРµРј СЃР»РѕРІР°СЂСЊ (РґР»СЏ С‚РµСЃС‚РѕРІРѕР№ РІС‹Р±РѕСЂРєРё)
 
-# ?Убираем ненужное
+# ?РЈР±РёСЂР°РµРј РЅРµРЅСѓР¶РЅРѕРµ
 rm(train_bag)
 rm(train_corpus)
 rm(train_vector)
 rm(training)
 rm(rws)
 
-# Выращиваем Случайный лес ####################################################
+# Р’С‹СЂР°С‰РёРІР°РµРј РЎР»СѓС‡Р°Р№РЅС‹Р№ Р»РµСЃ ####################################################
 t_start <- Sys.time()
 set.seed(3113)
 forest <- train(as.factor(sentiment) ~., data=train_df,
@@ -114,22 +114,22 @@ forest <- train(as.factor(sentiment) ~., data=train_df,
                 allowParallel=TRUE)
 t_end <- Sys.time()
 
-# Смотрим на модель и на время обучения
+# РЎРјРѕС‚СЂРёРј РЅР° РјРѕРґРµР»СЊ Рё РЅР° РІСЂРµРјСЏ РѕР±СѓС‡РµРЅРёСЏ
 t_end-t_start
 print(forest)
 
 
-# Загружаем и обрабатываем контрольную выборку ################################
+# Р—Р°РіСЂСѓР¶Р°РµРј Рё РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј РєРѕРЅС‚СЂРѕР»СЊРЅСѓСЋ РІС‹Р±РѕСЂРєСѓ ################################
 testing <- read.delim(unz("testData.tsv.zip", 
                                "testData.tsv"),
                                header = TRUE,
                                sep = "\t",
                                quote = "")
 
-# Проверяем размерность
+# РџСЂРѕРІРµСЂСЏРµРј СЂР°Р·РјРµСЂРЅРѕСЃС‚СЊ
 dim(testing)
 
-# Обрабатываем тестовые ревю
+# РћР±СЂР°Р±Р°С‚С‹РІР°РµРј С‚РµСЃС‚РѕРІС‹Рµ СЂРµРІСЋ
 rws <- sapply(1:nrow(testing), function(x){
     
     if(x %% 1000 == 0) print(paste(x, "reviews processed")) 
@@ -144,7 +144,7 @@ rws <- sapply(1:nrow(testing), function(x){
     paste(rw, collapse=" ")
 })
 
-# Формируем вектор ревю, строим корпус, формируем матрицу документы/термины ###
+# Р¤РѕСЂРјРёСЂСѓРµРј РІРµРєС‚РѕСЂ СЂРµРІСЋ, СЃС‚СЂРѕРёРј РєРѕСЂРїСѓСЃ, С„РѕСЂРјРёСЂСѓРµРј РјР°С‚СЂРёС†Сѓ РґРѕРєСѓРјРµРЅС‚С‹/С‚РµСЂРјРёРЅС‹ ###
 test_vector <- VectorSource(rws)
 test_corpus <- Corpus(test_vector, 
                        readerControl = list(language = "en"))
@@ -158,11 +158,11 @@ sentiment <- rep(0, 25000)
 test_df <- cbind(testing[1:25000,1], sentiment, test_df)
 names(test_df)[1] <- "id"
 
-# Прогнозируем сантимент ######################################################
+# РџСЂРѕРіРЅРѕР·РёСЂСѓРµРј СЃР°РЅС‚РёРјРµРЅС‚ ######################################################
 
 test_df[,2] <- predict(forest, newdata = test_df)
 
-# Сохраняем результата в csv
+# РЎРѕС…СЂР°РЅСЏРµРј СЂРµР·СѓР»СЊС‚Р°С‚Р° РІ csv
 write.csv(test_df[,1:2], file="Submission.csv", 
           quote=FALSE,
           row.names=FALSE)
